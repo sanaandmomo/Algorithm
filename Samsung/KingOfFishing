@@ -1,0 +1,107 @@
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.util.LinkedList;
+import java.util.PriorityQueue;
+import java.util.Queue;
+
+public class Main {
+	
+	static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+	static BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(System.out));
+	static int R, C, N, my[] = {-1, 1, 0, 0}, mx[] = {0, 0, 1, -1}, tran[] = {1, 0, 3, 2};
+	static PriorityQueue<Shark>[][] shark;
+	static Queue<Shark> q = new LinkedList<>();
+	
+	public static void main(String[] args) throws Exception {
+		String[] s = br.readLine().split(" ");
+		R = Integer.parseInt(s[0]);
+		C = Integer.parseInt(s[1]);
+		N = Integer.parseInt(s[2]);
+		
+		// 속도, 방향, 크기
+		shark = new PriorityQueue[R][C];
+		
+		int i, j, y, x, sp, d, z, sum = 0;
+		
+		for (i = 0; i <  R; i++)
+			for (j = 0; j < C; j++)
+				shark[i][j] = new PriorityQueue<>();
+		
+		for (i = 0; i < N; i++) {
+			s = br.readLine().split(" ");
+			
+			y = Integer.parseInt(s[0]) - 1;
+			x = Integer.parseInt(s[1]) - 1;
+			sp = Integer.parseInt(s[2]);
+			d = Integer.parseInt(s[3]) - 1;
+			
+			sp = d == 0 || d == 1 ? sp % (2 * R - 2) : sp % (2 * C - 2);
+			
+			shark[y][x].add(new Shark(y, x, sp, d, Integer.parseInt(s[4])));
+		}
+		
+		for (i = 0; i < C; i++) {
+			// 사냥
+			for (j = 0; j < R; j++) 
+				if (shark[j][i].size() > 0) {
+					sum += shark[j][i].poll().z;
+					break;
+				}
+			
+			if (i == C - 1) break;
+			
+			// 상어들 저장
+			for (y = 0; y < R; y++) {
+				for (x = 0; x < C; x++) { 
+					if (!shark[y][x].isEmpty()) {
+						Shark sh = shark[y][x].peek();
+						if (sh.s != 0) q.add(shark[y][x].poll());
+					}
+				}
+			}
+			
+			// 상어 이동
+			while (!q.isEmpty()) {
+				Shark cur = q.poll();
+				
+				for (j = 0; j < cur.s; j++) {
+					int dir = cur.d;
+					
+					if ((cur.y == 0 && dir == 0) || (cur.y == R - 1 && dir == 1) || (cur.x == 0 && dir == 3) || (cur.x == C - 1 && dir == 2)) 
+						cur.d = tran[dir];
+					
+					cur.y += my[cur.d];
+					cur.x += mx[cur.d];
+				}
+				shark[cur.y][cur.x].add(cur);
+			}
+			
+			// 제일 큰 애들만 남기기
+			for (y = 0; y < R; y++) 
+				for (x = 0; x < C; x++) 
+					while (shark[y][x].size() > 1) shark[y][x].poll();
+		}
+		
+		bw.write(sum + "");
+		bw.close();
+	}
+	
+}
+
+class Shark implements Comparable<Shark>{
+	int y, x, s, d, z;
+	
+	Shark (int y, int x, int a, int b, int c) {
+		this.y = y;
+		this.x = x;
+		s = a;
+		d = b;
+		z = c;
+	}
+	
+	public int compareTo(Shark o) {
+		return o.z > this.z ? -1 : 1;
+	}
+}
